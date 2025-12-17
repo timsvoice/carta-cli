@@ -1,0 +1,9 @@
+pyproject.toml
+src/carta.egg-info/PKG-INFO
+src/carta.egg-info/SOURCES.txt
+src/carta.egg-info/dependency_links.txt
+src/carta.egg-info/entry_points.txt
+src/carta.egg-info/requires.txt
+src/carta.egg-info/top_level.txt
+src/research/__init__.py
+src/research/research.py
