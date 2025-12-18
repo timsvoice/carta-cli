@@ -1,4 +1,4 @@
-from carta.commands import research, cache
+from carta.commands import research
 import click
 
 
@@ -11,4 +11,3 @@ def cli():
 
 
 cli.add_command(research.research)
-cli.add_command(cache.cache)

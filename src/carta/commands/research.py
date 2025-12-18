@@ -1,5 +1,13 @@
 import click
 
+"""
+The purpose of the Research module is to gather context from the codebase and develop a high-level design document.
+
+@TODO: Add research prompt (old spec prompt)
+@TODO: Add a module for interacting with the LLM
+@TODO: Add a function for performing an agentic tool loop for context gathering
+"""
+
 
 @click.command()
 def research():
