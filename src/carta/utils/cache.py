@@ -54,10 +54,10 @@ def parse_file(file_path: Path) -> str | None:
     return ast.unparse(stripped)
 
 
-def build_cache(source_dir: Path, cache_dir: Path) -> dict[str, str]:
+def build_cache(source_dir: Path | None = None, cache_dir: Path | None = None) -> dict[str, str]:
     """Build cache of stripped Python files."""
-    source_path = source_dir.resolve()
-    cache_path = cache_dir.resolve()
+    source_path = (source_dir or Path.cwd()).resolve()
+    cache_path = (cache_dir or Path.cwd() / ".cache").resolve()
     exclude = {"__pycache__", ".git", ".venv", "venv", ".cache", "node_modules"}
 
     cached = {}
