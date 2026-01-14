@@ -1,4 +1,4 @@
-from carta.commands import research
+from carta.commands import discover
 import click
 
 
@@ -10,4 +10,4 @@ def cli():
     pass
 
 
-cli.add_command(research.research)
+cli.add_command(discover.discover)
