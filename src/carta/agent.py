@@ -1,7 +1,7 @@
 import httpx
 import json
 import os
-from typing import Any
+from typing import Any, Callable
 
 
 class AgentError(Exception):
@@ -13,6 +13,7 @@ class AgentError(Exception):
 class Agent:
     def __init__(
         self,
+        root_path: str = ".",
         http_client: Any = None,
         model: str = "openai/gpt-4o-mini",
         temperature: float = 0.0,
@@ -23,11 +24,12 @@ class Agent:
         if not self.api_key:
             raise AgentError("OPENROUTER_API_KEY is not set")
 
+        self._root_path = root_path
         self._http_client = http_client or httpx
         self._model = model
         self._temperature = temperature
         self._max_tokens = max_tokens
-        self._max_iterations = 10
+        self._max_iterations = 100
         self._tools = [
             {
                 "type": "function",
@@ -65,18 +67,49 @@ class Agent:
             },
         ]
 
+    def _resolve_path(self, path: str) -> str:
+        """Resolve a path relative to root_path"""
+        return os.path.join(self._root_path, path)
+
     def _execute_read_file(self, path: str) -> str:
         """Read a file"""
-        with open(path, "r") as f:
+
+        full_path = self._resolve_path(path)
+
+        if os.path.isdir(full_path):
+            return f"Error: '{path}' is a directory. Use list_files to see its contents."
+
+        if not os.path.exists(full_path):
+            return f"Error: '{path}' does not exist."
+
+        with open(full_path, "r") as f:
             return f.read()
 
-    def _execute_list_files(self, path: str) -> list[str]:
-        """List files in a directory"""
-        return os.listdir(path)
+    def _execute_list_files(self, path: str = ".") -> str:
+        """List files in a directory, with trailing / for subdirectories"""
+        full_path = self._resolve_path(path)
 
-    def _execute_tool(self, tool_call: dict) -> Any:
+        if not os.path.exists(full_path):
+            return f"Error: '{path}' does not exist."
+
+        if not os.path.isdir(full_path):
+            return f"Error: '{path}' is not a directory."
+
+        entries = []
+
+        for name in os.listdir(full_path):
+            entry_path = os.path.join(full_path, name)
+
+            if os.path.isdir(entry_path):
+                entries.append(f"{name}/")
+            else:
+                entries.append(name)
+
+        return json.dumps(entries)
+
+    def _execute_tool(self, tool_call: dict) -> str:
         """Execute a tool call from OpenRouter API response"""
-        tools = {
+        tools: dict[str, Callable[..., str]] = {
             "file_read": self._execute_read_file,
             "list_files": self._execute_list_files,
         }
@@ -85,15 +118,15 @@ class Agent:
         name = func["name"]
 
         if name not in tools:
-            raise AgentError(f"Unknown tool: {name}")
+            return f"Error: Unknown tool '{name}'. Available tools: {', '.join(tools.keys())}"
 
         try:
             parameters = json.loads(func["arguments"])
             return tools[name](**parameters)
         except (KeyError, json.JSONDecodeError) as e:
-            raise AgentError(f"Malformed tool call: {e}")
-        except OSError as e:
-            raise AgentError(f"Tool '{name}' failed: {e}")
+            return f"Error: Malformed arguments for '{name}': {e}"
+        except Exception as e:
+            return f"Error: Tool '{name}' failed: {e}"
 
     def _call_model(self, messages: list[dict]) -> dict:
         try:
