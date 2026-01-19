@@ -1,0 +1,95 @@
+- description: "Should draft a discovery document"
+  provider:
+    id: openrouter:openai/gpt-4.1-mini
+    config:
+      tools: file://src/carta/prompts/tests/tools/tools.yaml
+      tool_choice: auto
+  vars:
+    system_prompt: file://src/carta/prompts/discover/draft.md
+    input: |
+      [
+        {
+          "topic": "Scope",
+          "question": "What types of users should be able to authenticate into the app?",
+          "options": [
+            {
+              "description": "Only internal or predefined users",
+              "impact": "Limits user base, simpler user management"
+            },
+            {
+              "description": "Any external users with accounts",
+              "impact": "Requires broader user registration and management"
+            }
+          ],
+          "answer": "Only internal or predefined users"
+        },
+        {
+          "topic": "Security and Privacy",
+          "question": "Should the authentication process include multi-factor authentication (MFA)?",
+          "options": [
+            {
+              "description": "No MFA, only username and password",
+              "impact": "Simpler for users but less secure"
+            },
+            {
+              "description": "Optional MFA for sensitive actions",
+              "impact": "Improves security without burdening all users"
+            },
+            {
+              "description": "Mandatory MFA for all users",
+              "impact": "Provides highest security but adds user friction"
+            }
+          ],
+          "answer": "No MFA, only username and password"
+        },
+        {
+          "topic": "User Experience",
+          "question": "Should users be able to reset or recover their passwords if lost?",
+          "options": [
+            {
+              "description": "No password recovery",
+              "impact": "Simplifies system but may frustrate users"
+            },
+            {
+              "description": "Allow recovery via email or other methods",
+              "impact": "Improves user experience but requires secure recovery flows"
+            }
+          ],
+          "answer": "Allow recovery via email or other methods"
+        },
+        {
+          "topic": "Scope",
+          "question": "Should users be allowed to stay signed in across sessions (remember me functionality)?",
+          "options": [
+            {
+              "description": "No, require login each session",
+              "impact": "Increases security but may reduce convenience"
+            },
+            {
+              "description": "Yes, allow persistent sessions",
+              "impact": "Improves UX but needs secure session management"
+            }
+          ],
+          "answer": "Yes, allow persistent sessions"
+        }
+      ]
+  threshold: 0.8
+  assert:
+    - type: llm-rubric
+      provider:
+        id: openrouter:openai/gpt-4.1-mini
+      value: |
+        The draft discovery document should have the following sections:
+
+        **Objective**: [What needs accomplishing]
+        **Context**: [Why needed, business impact]
+        **Assumptions**: [Reasonable defaults]
+        **Constraints**: [Technical and business limitations]
+        **Acceptance Criteria**: [Verifiable, testable conditions]
+        **User Scenarios**: [Step-by-step flows with expected outcomes]
+        **Edge Cases**: [Boundary conditions]
+        **Dependencies** *(if applicable)*: [External requirements]
+        **Out of Scope**: [Explicitly excluded]
+
+        PASS if: The draft discovery document has all the sections and the sections are complete.
+        FAIL if: The draft discovery document is missing any of the sections or the sections are incomplete.

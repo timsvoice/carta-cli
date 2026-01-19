@@ -16,3 +16,4 @@ defaultGrader:
 
 tests:
   - file://src/carta/prompts/tests/discovery/gather.test.yaml
+  - file://src/carta/prompts/tests/discovery/draft.test.yaml

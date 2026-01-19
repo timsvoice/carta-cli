@@ -18,7 +18,7 @@ The purpose of the Discover module is to gather context from the codebase and de
 
 @click.command()
 @click.argument("user_message", type=str)
-def discover(user_message: str):
+def discover_gather(user_message: str):
     """
     Discover and document requirements for a feature.
     """
@@ -39,3 +39,13 @@ def discover(user_message: str):
     message = response["message"]["content"]
     # questions = json.loads(message)
     print(message)
+
+
+@click.command()
+@click.argument("user_message", type=str)
+def discover_draft(user_message: str):
+    """
+    Discover and document requirements for a feature.
+    """
+    # Build cache of stripped Python files for LLM context
+    build_cache()

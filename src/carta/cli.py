@@ -10,4 +10,4 @@ def cli():
     pass
 
 
-cli.add_command(discover.discover)
+cli.add_command(discover.discover_gather)
