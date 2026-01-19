@@ -202,6 +202,6 @@ class Agent:
         return self._prompt(messages, _depth + 1)
 
     def run(self, prompt: str) -> dict:
-        """Run the agent with a prompt string"""
+        """Run the agent with a prompt string."""
         messages = [{"role": "user", "content": prompt}]
         return self._prompt(messages)

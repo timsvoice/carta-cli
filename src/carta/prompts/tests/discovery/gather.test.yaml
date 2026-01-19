@@ -3,29 +3,39 @@
   vars:
     input: "I want to add user authentication to my app"
   assert:
-    # Structure: Format and template compliance
-    - type: g-eval
-      value: |
-        Evaluate whether the output follows the required structure:
-        - Contains 2-5 numbered questions using "## Q[N]:" format, OR states "Ready to proceed"
-        - Each question includes "**Need to know**:", "**Options**:" with labeled choices (A, B, etc.), and "→ Impact:" for each option
+    # Structure: Valid JSON array
+    - type: is-json
 
-        Score 1.0: Correct question count, "## Q[N]:" headers, and all three template elements present with correct formatting
-        Score 0.7: All elements present but minor format issues (e.g., "Q1:" instead of "## Q1:", missing bold, wrong arrow)
-        Score 0.4: Missing template elements or wrong question count
-        Score 0.0: Structure not recognizable as the expected format
-      threshold: 0.7
+    # Structure: Correct schema with 2-5 questions
+    - type: javascript
+      value: |
+        try {
+          const data = JSON.parse(output);
+          if (!Array.isArray(data)) return false;
+          if (data.length < 2 || data.length > 5) return false;
+          for (const q of data) {
+            if (!q.topic || !q.question || !Array.isArray(q.options)) return false;
+            for (const opt of q.options) {
+              if (!opt.description || !opt.impact) return false;
+            }
+          }
+          return true;
+        } catch (e) {
+          return false;
+        }
 
     # Relevance: Questions target input-specific gaps
     - type: g-eval
       value: |
-        Evaluate whether questions address specific gaps in the input feature description.
+        Evaluate whether the questions are specific to the feature in the input, not generic questions that could apply to any feature.
 
-        Score 1.0: All questions directly target ambiguities in the given input (e.g., for "user authentication" - asks about user types, session handling, account recovery)
-        Score 0.7: Most questions are relevant, one may be generic
-        Score 0.4: Questions are generic requirements questions not tailored to the specific input
-        Score 0.0: Questions are unrelated to the input or could apply to any feature
-      threshold: 0.8
+        Input feature: "user authentication"
+
+        Score 1.0: Questions ask about authentication-specific decisions (login methods, password policies, session behavior, account recovery, user roles, security requirements)
+        Score 0.7: Most questions are authentication-specific, one may be generic
+        Score 0.4: Questions are generic software requirements (timeline, budget, priority) not specific to authentication
+        Score 0.0: Questions have nothing to do with authentication
+      threshold: 0.7
 
     # Role: Requirements (WHAT/WHY) not implementation (HOW)
     - type: llm-rubric

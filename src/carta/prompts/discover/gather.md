@@ -24,9 +24,7 @@ Generate 2-5 clarifying questions to gather requirements for a discovery documen
 4. Output questions using the template below
 
 ## Output
-Questions only — no preamble, no code blocks, no summary. Answers are gathered in the next phase.
-
-If the description is already detailed enough, output "Ready to proceed" with a brief summary of what's clear.
+Output ONLY the raw JSON array starting with `[` and ending with `]`. No markdown, no code fences, no explanation before or after.
 
 ## Question Guidelines
 - Questions should be answerable with a clear decision, not open-ended discussion
@@ -47,22 +45,37 @@ If the description is already detailed enough, output "Ready to proceed" with a 
 ```
 
 **Question Template:**
-```
-## Q[N]: [Topic]
-**Need to know**: [Specific question]
-
-**Options**:
-- A: [Description] → Impact: [Consequence]
-- B: [Description] → Impact: [Consequence]
-- C: [Description] → Impact: [Consequence]
+```json
+[
+  {
+    "topic": "aspect of the feature being discussed",
+    "question": "the question to ask the user",
+    "options": [
+      {
+        "description": "describe this option",
+        "impact": "describe the impact on the feature or system"
+      }
+    ]
+  }
+]
 ```
 
 **Example:**
-```
-## Q1: Scope
-**Need to know**: Should this feature support bulk operations?
-
-**Options**:
-- A: Single item only → Impact: Simpler UX, faster delivery
-- B: Bulk support → Impact: More complex UI, handles power users
+```json
+[
+  {
+    "topic": "Scope",
+    "question": "Should this feature support bulk operations?",
+    "options": [
+      {
+        "description": "Single item only",
+        "impact": "Simpler UX, faster delivery"
+      },
+      {
+        "description": "Bulk support",
+        "impact": "More complex UI, handles power users"
+      }
+    ]
+  }
+]
 ```
