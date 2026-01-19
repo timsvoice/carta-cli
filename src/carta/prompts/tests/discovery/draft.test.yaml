@@ -3,7 +3,7 @@
     id: openrouter:openai/gpt-4.1-mini
     config:
       tools: file://src/carta/prompts/tests/tools/tools.yaml
-      tool_choice: auto
+      tool_choice: none
   vars:
     system_prompt: file://src/carta/prompts/discover/draft.md
     input: |
@@ -73,7 +73,7 @@
           "answer": "Yes, allow persistent sessions"
         }
       ]
-  threshold: 0.8
+  threshold: 1
   assert:
     - type: llm-rubric
       provider:
@@ -93,3 +93,44 @@
 
         PASS if: The draft discovery document has all the sections and the sections are complete.
         FAIL if: The draft discovery document is missing any of the sections or the sections are incomplete.
+
+    - type: llm-rubric
+      provider:
+        id: openrouter:openai/gpt-4.1-mini
+      value: |
+        The draft discovery document should not include any technology choices, API designs, or code structure.
+
+        PASS if: The draft discovery document does not include any technology choices, API designs, or code structure.
+        FAIL if: The draft discovery document includes any technology choices, API designs, or code structure.
+
+    - type: llm-rubric
+      provider:
+        id: openrouter:openai/gpt-4.1-mini
+      value: |
+        The draft discovery document should not include any assumptions about the project not supported by either the context, user description, or the questions and answers.
+
+        PASS if: The draft discovery document does not include any assumptions about the project not supported by either the context, user description, or the questions and answers.
+        FAIL if: The draft discovery document includes any assumptions about the project not supported by either the context, user description, or the questions and answers.
+
+    - type: llm-rubric
+      provider:
+        id: openrouter:openai/gpt-4.1-mini
+      value: |
+        The Context section should incorporate specific trade-offs or impacts mentioned in the Q&A answers, not generic statements like "improving efficiency" or "reducing errors".
+
+        For example, if an answer's impact mentions "simpler user management" or "less secure", those trade-offs should inform the Context.
+
+        PASS if: The Context section references specific trade-offs or constraints from the Q&A answer impacts.
+        FAIL if: The Context section uses only generic business justifications not traceable to the Q&A.
+
+    - type: llm-rubric
+      provider:
+        id: openrouter:openai/gpt-4.1-mini
+      value: |
+        User Scenarios should describe realistic situations with user context (who the user is, what they're trying to accomplish), not just procedural command flows.
+
+        Good: "An internal employee returns to the app after lunch and is still logged in due to persistent sessions."
+        Bad: "User opens app → User is authenticated → Session is valid."
+
+        PASS if: At least half of the User Scenarios include realistic user context or motivation.
+        FAIL if: User Scenarios are purely procedural step lists without user context.

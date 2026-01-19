@@ -11,3 +11,4 @@ def cli():
 
 
 cli.add_command(discover.discover_gather)
+cli.add_command(discover.discover_draft)
