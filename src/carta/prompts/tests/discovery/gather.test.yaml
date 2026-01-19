@@ -1,6 +1,30 @@
+# Test case 0: Tool calling - model should gather context first
+- description: "Should call tools to gather codebase context"
+  provider:
+    id: openrouter:openai/gpt-4.1-mini
+    config:
+      tools: file://src/carta/prompts/tests/tools/tools.yaml
+      tool_choice: auto
+  vars:
+    system_prompt: file://src/carta/prompts/discover/gather.md
+    input: "I want to add user authentication to my app"
+  assert:
+    - type: javascript
+      value: |
+        if (Array.isArray(output)) {
+          return output.some(tc => tc.type === 'function');
+        }
+        return false;
+
 # Test case 1: Vague feature request
 - description: "Vague feature - should generate clarifying questions"
+  provider:
+    id: openrouter:openai/gpt-4.1-mini
+    config:
+      tools: file://src/carta/prompts/tests/tools/tools.yaml
+      tool_choice: none
   vars:
+    system_prompt: file://src/carta/prompts/discover/gather.md
     input: "I want to add user authentication to my app"
   assert:
     # Structure: Valid JSON array
@@ -26,6 +50,8 @@
 
     # Relevance: Questions target input-specific gaps
     - type: g-eval
+      provider:
+        id: openrouter:openai/gpt-4.1-mini
       value: |
         Evaluate whether the questions are specific to the feature in the input, not generic questions that could apply to any feature.
 
@@ -39,6 +65,8 @@
 
     # Role: Requirements (WHAT/WHY) not implementation (HOW)
     - type: llm-rubric
+      provider:
+        id: openrouter:openai/gpt-4.1-mini
       value: |
         Questions ask about requirements (capabilities, behaviors, user needs) not implementation details.
 

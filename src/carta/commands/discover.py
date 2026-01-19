@@ -36,4 +36,6 @@ def discover(user_message: str):
         {user_message}
         """
     )
-    print(response)
+    message = response["message"]["content"]
+    # questions = json.loads(message)
+    print(message)

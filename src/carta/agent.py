@@ -15,7 +15,7 @@ class Agent:
         self,
         root_path: str = ".",
         http_client: Any = None,
-        model: str = "openai/gpt-4o-mini",
+        model: str = "openai/gpt-4.1-mini",
         temperature: float = 0.0,
         max_tokens: int = 5000,
     ):
@@ -189,6 +189,9 @@ class Agent:
         messages = messages + [assistant_message]
 
         for tool_call in assistant_message["tool_calls"]:
+            print(
+                f"Executing tool call: {tool_call['function']['name']} on {tool_call['function']['arguments']}"
+            )
             tool_result = self._execute_tool(tool_call)
 
             messages = messages + [
