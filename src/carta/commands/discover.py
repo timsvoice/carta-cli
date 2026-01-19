@@ -1,7 +1,6 @@
 import click
 
 from carta.utils.cache import build_cache
-from carta.agent import Agent
 
 """
 The purpose of the Discover module is to gather context from the codebase and develop a high-level design document.
@@ -20,8 +19,10 @@ def discover():
     # Build cache of stripped Python files for LLM context
     build_cache()
 
-    agent = Agent(root_path=".cache")
-    result = agent.run(
-        "Read all the files in the src/carta directory and describe what the tool is used for."
-    )
-    click.echo(result)
+    # TODO: First gather requirements from the user in text input form
+    # TODO: Pass the requirements to the agent to generate disambiguation questions
+    # TODO: Gather user responses to the disambiguation questions
+    # TODO: Use answers to generate the first draft of the discovery document
+    # TODO: Request user approval for the draft
+    # TODO: Iterate
+    # TODO: Save the final discovery document to the .carta directory

@@ -1,0 +1,36 @@
+# Test case 1: Vague feature request
+- description: "Vague feature - should generate clarifying questions"
+  vars:
+    input: "I want to add user authentication to my app"
+  assert:
+    # Structure: Format and template compliance
+    - type: g-eval
+      value: |
+        Evaluate whether the output follows the required structure:
+        - Contains 2-5 numbered questions using "## Q[N]:" format, OR states "Ready to proceed"
+        - Each question includes "**Need to know**:", "**Options**:" with labeled choices (A, B, etc.), and "→ Impact:" for each option
+
+        Score 1.0: Correct question count, "## Q[N]:" headers, and all three template elements present with correct formatting
+        Score 0.7: All elements present but minor format issues (e.g., "Q1:" instead of "## Q1:", missing bold, wrong arrow)
+        Score 0.4: Missing template elements or wrong question count
+        Score 0.0: Structure not recognizable as the expected format
+      threshold: 0.7
+
+    # Relevance: Questions target input-specific gaps
+    - type: g-eval
+      value: |
+        Evaluate whether questions address specific gaps in the input feature description.
+
+        Score 1.0: All questions directly target ambiguities in the given input (e.g., for "user authentication" - asks about user types, session handling, account recovery)
+        Score 0.7: Most questions are relevant, one may be generic
+        Score 0.4: Questions are generic requirements questions not tailored to the specific input
+        Score 0.0: Questions are unrelated to the input or could apply to any feature
+      threshold: 0.8
+
+    # Role: Requirements (WHAT/WHY) not implementation (HOW)
+    - type: llm-rubric
+      value: |
+        Questions ask about requirements (capabilities, behaviors, user needs) not implementation details.
+
+        PASS if: Questions use requirement-level vocabulary like "authentication methods", "user types", "security levels", "session policies"
+        FAIL if: Questions mention specific technologies (OAuth, JWT, SAML), databases (PostgreSQL, Redis), services (Auth0, Firebase), or architectures (REST, GraphQL, microservices)
