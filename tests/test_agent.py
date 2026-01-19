@@ -1,3 +1,6 @@
+import os
+import tempfile
+
 import pytest
 from unittest.mock import Mock, MagicMock
 from carta.agent import Agent
@@ -26,8 +29,18 @@ def mock_httpx():
 
 
 @pytest.fixture
-def agent(mock_httpx):
+def temp_dir():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create a test file
+        with open(os.path.join(tmpdir, "test.txt"), "w") as f:
+            f.write("test content")
+        yield tmpdir
+
+
+@pytest.fixture
+def agent(mock_httpx, temp_dir):
     return Agent(
+        root_path=temp_dir,
         http_client=mock_httpx,
         model="openai/gpt-4o-mini",
         temperature=0.0,
@@ -49,7 +62,7 @@ def test_agent_run(agent):
     assert data is not None
 
 
-def test_agent_run_with_tool(mock_httpx):
+def test_agent_run_with_tool(mock_httpx, temp_dir):
     """Test agent run with tool."""
     # First response: model wants to call a tool
     first_response = Mock(
@@ -95,7 +108,7 @@ def test_agent_run_with_tool(mock_httpx):
                         "finish_reason": "stop",
                         "message": {
                             "role": "assistant",
-                            "content": "The files in the current directory are: ['test_agent.py']",
+                            "content": "The files in the current directory are: ['test.txt']",
                         },
                     }
                 ],
@@ -106,6 +119,7 @@ def test_agent_run_with_tool(mock_httpx):
     mock_httpx.post.side_effect = [first_response, second_response]
 
     agent = Agent(
+        root_path=temp_dir,
         http_client=mock_httpx,
         model="openai/gpt-4o-mini",
         temperature=0.0,

@@ -1,0 +1,23 @@
+description: "Carta Prompt Evaluation"
+
+providers:
+  - id: openrouter:openai/gpt-4o-mini
+    prompts: [gather]
+
+prompts:
+  - id: gather-requirements
+    label: gather
+    raw: |
+      {{system_prompt}}
+
+      ## Feature Description
+      {{input}}
+
+defaultTest:
+  options:
+    provider: openrouter:anthropic/claude-sonnet-4
+  vars:
+    system_prompt: file://src/carta/prompts/discover/gather.md
+
+tests:
+  - file://src/carta/prompts/tests/discovery/gather.test.yaml

@@ -1,0 +1,46 @@
+# Test case 1: Vague feature request
+- description: "Vague feature - should generate clarifying questions"
+  vars:
+    input: "I want to add user authentication to my app"
+  assert:
+    # Structure: Valid JSON array
+    - type: is-json
+
+    # Structure: Correct schema with 2-5 questions
+    - type: javascript
+      value: |
+        try {
+          const data = JSON.parse(output);
+          if (!Array.isArray(data)) return false;
+          if (data.length < 2 || data.length > 5) return false;
+          for (const q of data) {
+            if (!q.topic || !q.question || !Array.isArray(q.options)) return false;
+            for (const opt of q.options) {
+              if (!opt.description || !opt.impact) return false;
+            }
+          }
+          return true;
+        } catch (e) {
+          return false;
+        }
+
+    # Relevance: Questions target input-specific gaps
+    - type: g-eval
+      value: |
+        Evaluate whether the questions are specific to the feature in the input, not generic questions that could apply to any feature.
+
+        Input feature: "user authentication"
+
+        Score 1.0: Questions ask about authentication-specific decisions (login methods, password policies, session behavior, account recovery, user roles, security requirements)
+        Score 0.7: Most questions are authentication-specific, one may be generic
+        Score 0.4: Questions are generic software requirements (timeline, budget, priority) not specific to authentication
+        Score 0.0: Questions have nothing to do with authentication
+      threshold: 0.7
+
+    # Role: Requirements (WHAT/WHY) not implementation (HOW)
+    - type: llm-rubric
+      value: |
+        Questions ask about requirements (capabilities, behaviors, user needs) not implementation details.
+
+        PASS if: Questions use requirement-level vocabulary like "authentication methods", "user types", "security levels", "session policies"
+        FAIL if: Questions mention specific technologies (OAuth, JWT, SAML), databases (PostgreSQL, Redis), services (Auth0, Firebase), or architectures (REST, GraphQL, microservices)
