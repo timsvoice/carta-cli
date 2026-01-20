@@ -18,6 +18,7 @@ class Agent:
         model: str = "openai/gpt-4.1-mini",
         temperature: float = 0.0,
         max_tokens: int = 5000,
+        on_tool_call: Callable[[str, dict], None] | None = None,
     ):
         self.api_key = os.environ.get("OPENROUTER_API_KEY")
 
@@ -30,6 +31,7 @@ class Agent:
         self._temperature = temperature
         self._max_tokens = max_tokens
         self._max_iterations = 100
+        self._on_tool_call = on_tool_call
         self._tools = [
             {
                 "type": "function",
@@ -143,6 +145,7 @@ class Agent:
                     "Authorization": f"Bearer {self.api_key}",
                     "Content-Type": "application/json",
                 },
+                timeout=120.0,
             )
         except Exception as e:
             raise AgentError(f"Request failed: {e}")
@@ -189,9 +192,16 @@ class Agent:
         messages = messages + [assistant_message]
 
         for tool_call in assistant_message["tool_calls"]:
-            print(
-                f"Executing tool call: {tool_call['function']['name']} on {tool_call['function']['arguments']}"
-            )
+            func = tool_call["function"]
+            tool_name = func["name"]
+            try:
+                tool_args = json.loads(func["arguments"])
+            except json.JSONDecodeError:
+                tool_args = {}
+
+            if self._on_tool_call:
+                self._on_tool_call(tool_name, tool_args)
+
             tool_result = self._execute_tool(tool_call)
 
             messages = messages + [
