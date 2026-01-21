@@ -1,0 +1,17 @@
+description: "Carta Draft Discovery Document Evaluation"
+
+prompts:
+  - id: draft-discovery
+    raw: |
+      {{system_prompt}}
+
+      {{input}}
+
+providers:
+  - id: openrouter:openai/gpt-4.1-mini
+
+defaultGrader:
+  id: openrouter:anthropic/claude-haiku-4.5
+
+tests:
+  - file://tests.yaml

@@ -2,10 +2,10 @@
   provider:
     id: openrouter:openai/gpt-4.1-mini
     config:
-      tools: file://src/carta/prompts/tests/tools/tools.yaml
+      tools: file://../../tools/tools.yaml
       tool_choice: none
   vars:
-    system_prompt: file://src/carta/prompts/discover/draft.md
+    system_prompt: file://../../../discover/draft.md
     input: |
       [
         {

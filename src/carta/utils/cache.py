@@ -1,11 +1,15 @@
 """
 Minimal codebase cache for LLM context.
 Strips function/method bodies while preserving signatures, docstrings, and structure.
+Also includes text files (markdown, yaml, json, toml) for additional context.
 """
 
 import ast
 import os
 from pathlib import Path
+
+# Python files get stripped, these are copied as-is
+TEXT_EXTENSIONS = {".md", ".yaml", ".yml", ".json", ".toml"}
 
 
 class BodyStripper(ast.NodeTransformer):
@@ -41,7 +45,7 @@ class BodyStripper(ast.NodeTransformer):
         return self._strip_body(node)
 
 
-def parse_file(file_path: Path) -> str | None:
+def strip_python_file(file_path: Path) -> str | None:
     """Parse a Python file and return stripped source."""
     try:
         source = file_path.read_text()
@@ -54,22 +58,38 @@ def parse_file(file_path: Path) -> str | None:
     return ast.unparse(stripped)
 
 
+def read_text_file(file_path: Path) -> str | None:
+    """Read a text file, returning None if it can't be read."""
+    try:
+        return file_path.read_text()
+    except (UnicodeDecodeError, OSError):
+        return None
+
+
 def build_cache(source_dir: Path | None = None, cache_dir: Path | None = None) -> dict[str, str]:
-    """Build cache of stripped Python files."""
+    """Build cache of Python files (stripped) and text files (as-is)."""
     source_path = (source_dir or Path.cwd()).resolve()
     cache_path = (cache_dir or Path.cwd() / ".cache").resolve()
-    exclude = {"__pycache__", ".git", ".venv", "venv", ".cache", "node_modules"}
+    exclude_dirs = {"__pycache__", ".git", ".venv", "venv", ".cache", "node_modules", ".carta"}
 
     cached = {}
     for root, dirs, files in os.walk(source_path):
-        dirs[:] = [d for d in dirs if d not in exclude and not d.endswith(".egg-info")]
+        dirs[:] = [d for d in dirs if d not in exclude_dirs and not d.endswith(".egg-info")]
 
         for file in files:
-            if not file.endswith(".py"):
+            file_path = Path(root) / file
+            suffix = file_path.suffix.lower()
+
+            # Process Python files (strip bodies)
+            if suffix == ".py":
+                content = strip_python_file(file_path)
+            # Copy text files as-is
+            elif suffix in TEXT_EXTENSIONS:
+                content = read_text_file(file_path)
+            else:
                 continue
 
-            file_path = Path(root) / file
-            if content := parse_file(file_path):
+            if content:
                 rel_path = str(file_path.relative_to(source_path))
                 cached[rel_path] = content
 

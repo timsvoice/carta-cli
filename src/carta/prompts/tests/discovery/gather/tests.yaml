@@ -3,10 +3,10 @@
   provider:
     id: openrouter:openai/gpt-4.1-mini
     config:
-      tools: file://src/carta/prompts/tests/tools/tools.yaml
+      tools: file://../../tools/tools.yaml
       tool_choice: auto
   vars:
-    system_prompt: file://src/carta/prompts/discover/gather.md
+    system_prompt: file://../../../discover/gather.md
     input: "I want to add user authentication to my app"
   assert:
     - type: javascript
@@ -21,10 +21,10 @@
   provider:
     id: openrouter:openai/gpt-4.1-mini
     config:
-      tools: file://src/carta/prompts/tests/tools/tools.yaml
+      tools: file://../../tools/tools.yaml
       tool_choice: none
   vars:
-    system_prompt: file://src/carta/prompts/discover/gather.md
+    system_prompt: file://../../../discover/gather.md
     input: "I want to add user authentication to my app"
   assert:
     # Structure: Valid JSON array

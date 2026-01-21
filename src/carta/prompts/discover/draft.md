@@ -31,6 +31,14 @@ Output ONLY the draft discovery document. No markdown, no code, no explanation b
 
 ## Output Format
 
+The first line MUST be a filename in this exact format:
+```
+FILENAME: three-word-name
+```
+- Use exactly 3 words in kebab-case (lowercase, hyphens between words)
+- Make it descriptive of the feature (e.g., "user-session-persistence", "new-user-signup", "password-reset-flow")
+- Follow with a blank line, then the discovery document
+
 **Objective**: [What needs accomplishing]
 
 **Context**: [Why needed, business impact]
@@ -69,6 +77,8 @@ Output ONLY the draft discovery document. No markdown, no code, no explanation b
 ## Example
 
 **User**: "Users should stay logged in when they close and reopen the browser"
+
+FILENAME: user-session-persistence
 
 **Objective**
 Implement persistent user authentication across browser sessions.
