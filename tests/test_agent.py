@@ -3,7 +3,7 @@ import tempfile
 
 import pytest
 from unittest.mock import Mock, MagicMock
-from carta.agent import Agent
+from carta.utils.agent import Agent
 
 
 @pytest.fixture

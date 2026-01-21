@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable
 
-from carta.agent import Agent
+from carta.utils.agent import Agent
 from carta.app.handlers.base import BaseHandler
 from carta.app.types import DraftResult
 
