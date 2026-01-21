@@ -1,36 +1,34 @@
-"""Wizard screen for Q&A flow."""
+"""Wizard handler for Q&A flow."""
 
-from textual.widgets import Input
+from typing import TYPE_CHECKING, Callable
 
-from carta.app.screens.base import BaseScreen
+from carta.app.handlers.base import BaseHandler
 from carta.app.types import WizardResult
 
+if TYPE_CHECKING:
+    from carta.app.app import CartaApp
 
-class WizardScreen(BaseScreen[WizardResult]):
-    """Screen for wizard Q&A flow to gather requirements."""
 
-    BINDINGS = [
-        ("escape", "cancel", "Cancel wizard"),
-    ]
+class WizardHandler(BaseHandler):
+    """Handler for wizard Q&A flow to gather requirements."""
 
-    def __init__(self, questions: list[dict]):
-        super().__init__(input_placeholder="")
+    def __init__(
+        self,
+        app: "CartaApp",
+        on_complete: Callable[[WizardResult], None],
+        questions: list[dict],
+    ):
+        super().__init__(app, on_complete)
         self.questions = questions
         self.current_idx = 0
         self.answers: dict[int, int] = {}
 
-    def on_mount(self) -> None:
-        """Display the first question when mounted."""
+    def start(self) -> None:
+        """Display the first question when handler becomes active."""
         self._display_current_question()
 
-    def on_input_submitted(self, event: Input.Submitted) -> None:
+    def handle_input(self, value: str) -> None:
         """Handle wizard option selection."""
-        value = event.value.strip()
-        if not value:
-            return
-
-        self.query_one("#user-input", Input).value = ""
-
         # Navigation commands
         if value.lower() in ("p", "prev", "previous") and self.current_idx > 0:
             self.current_idx -= 1
@@ -38,7 +36,7 @@ class WizardScreen(BaseScreen[WizardResult]):
             return
 
         if value.lower() in ("q", "quit"):
-            self.action_cancel()
+            self._cancel()
             return
 
         # Try to parse as option number
@@ -53,12 +51,14 @@ class WizardScreen(BaseScreen[WizardResult]):
             if 0 <= option_idx < len(question["options"]):
                 self._select_option(option_idx)
             else:
-                self.write_output(
-                    f"[yellow]Please enter a number between 1 and {len(question['options'])}[/yellow]"
+                self.app.write_output(
+                    f"[yellow]Please enter a number between 1 and "
+                    f"{len(question['options'])}[/yellow]"
                 )
         except ValueError:
-            self.write_output(
-                "[yellow]Enter a number to select an option, 'p' for previous, or 'q' to quit[/yellow]"
+            self.app.write_output(
+                "[yellow]Enter a number to select an option, "
+                "'p' for previous, or 'q' to quit[/yellow]"
             )
 
     def _display_current_question(self) -> None:
@@ -71,11 +71,11 @@ class WizardScreen(BaseScreen[WizardResult]):
         progress = "█" * (idx + 1) + "░" * (total - idx - 1)
         percent = int(((idx + 1) / total) * 100)
 
-        self.write_output(
+        self.app.write_output(
             f"[bold cyan]Question {idx + 1} of {total}: {question['topic']}[/bold cyan]"
         )
-        self.write_output(f"[dim]{progress} {percent}%[/dim]\n")
-        self.write_output(f"[italic]{question['question']}[/italic]\n")
+        self.app.write_output(f"[dim]{progress} {percent}%[/dim]\n")
+        self.app.write_output(f"[italic]{question['question']}[/italic]\n")
 
         # Display options
         for i, opt in enumerate(question["options"]):
@@ -83,13 +83,13 @@ class WizardScreen(BaseScreen[WizardResult]):
             # Show checkmark if previously answered
             if self.answers.get(idx) == i:
                 prefix = "[green]✓ [/green]"
-            self.write_output(f"{prefix}[bold]{i + 1}.[/bold] {opt['description']}")
-            self.write_output(f"      [dim]Impact: {opt['impact']}[/dim]")
+            self.app.write_output(f"{prefix}[bold]{i + 1}.[/bold] {opt['description']}")
+            self.app.write_output(f"      [dim]Impact: {opt['impact']}[/dim]")
 
-        self.write_output("")
+        self.app.write_output("")
 
         # Update input placeholder
-        self.set_placeholder(
+        self.app.set_placeholder(
             f"Select option (1-{len(question['options'])}), 'p' previous, 'q' quit"
         )
 
@@ -99,7 +99,7 @@ class WizardScreen(BaseScreen[WizardResult]):
         selected = question["options"][option_idx]
 
         self.answers[self.current_idx] = option_idx
-        self.write_output(f"[green]→ Selected: {selected['description']}[/green]\n")
+        self.app.write_output(f"[green]→ Selected: {selected['description']}[/green]\n")
 
         # Advance to next question or complete
         if self.current_idx < len(self.questions) - 1:
@@ -109,20 +109,20 @@ class WizardScreen(BaseScreen[WizardResult]):
             self._complete_wizard()
 
     def _complete_wizard(self) -> None:
-        """Complete the wizard and dismiss with results."""
+        """Complete the wizard and signal completion."""
         results = self._build_results()
 
-        self.write_output("[bold green]━━━ Requirements Gathered ━━━[/bold green]\n")
+        self.app.write_output("[bold green]━━━ Requirements Gathered ━━━[/bold green]\n")
 
         for q in results:
-            self.write_output(f"[bold]{q['topic']}:[/bold] {q.get('answer', 'No answer')}")
+            self.app.write_output(f"[bold]{q['topic']}:[/bold] {q.get('answer', 'No answer')}")
 
-        self.dismiss(WizardResult(status="completed", answers=results))
+        self.on_complete(WizardResult(status="completed", answers=results))
 
-    def action_cancel(self) -> None:
+    def _cancel(self) -> None:
         """Cancel the wizard."""
-        self.write_output("[yellow]Wizard cancelled.[/yellow]\n")
-        self.dismiss(WizardResult(status="cancelled"))
+        self.app.write_output("[yellow]Wizard cancelled.[/yellow]\n")
+        self.on_complete(WizardResult(status="cancelled"))
 
     def _build_results(self) -> list[dict]:
         """Build output with answers included."""

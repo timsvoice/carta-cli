@@ -3,6 +3,8 @@ import json
 import os
 from typing import Any, Callable
 
+from carta.utils.cache import build_cache
+
 
 class AgentError(Exception):
     """Base exception for Agent failures"""
@@ -18,7 +20,7 @@ class Agent:
         model: str = "openai/gpt-4.1-mini",
         temperature: float = 0.0,
         max_tokens: int = 5000,
-        on_tool_call: Callable[[str, dict], None] | None = None,
+        on_tool_call: Callable[[str, dict, int], None] | None = None,
     ):
         self.api_key = os.environ.get("OPENROUTER_API_KEY")
 
@@ -32,6 +34,7 @@ class Agent:
         self._max_tokens = max_tokens
         self._max_iterations = 100
         self._on_tool_call = on_tool_call
+        self._total_tokens_used: int = 0
         self._tools = [
             {
                 "type": "function",
@@ -172,12 +175,16 @@ class Agent:
             }
         ]
         data = self._call_model(messages)
+        self._total_tokens_used += data["total_tokens"]
+        data["total_tokens"] = self._total_tokens_used
         data["truncated"] = True
         return data
 
     def _prompt(self, messages: list[dict], _depth: int = 0) -> dict:
         """Internal: handle the agentic loop"""
         data = self._call_model(messages)
+        tokens_this_call = data["total_tokens"]
+        self._total_tokens_used += tokens_this_call
 
         finish_reason = data["finish_reason"]
         assistant_message = data["message"]
@@ -187,6 +194,8 @@ class Agent:
             return self._wrap_up(messages + [assistant_message])
 
         if finish_reason != "tool_calls":
+            # Return cumulative total, not just this call's tokens
+            data["total_tokens"] = self._total_tokens_used
             return data
 
         messages = messages + [assistant_message]
@@ -199,10 +208,16 @@ class Agent:
             except json.JSONDecodeError:
                 tool_args = {}
 
-            if self._on_tool_call:
-                self._on_tool_call(tool_name, tool_args)
-
             tool_result = self._execute_tool(tool_call)
+
+            if self._on_tool_call:
+                # Resolve paths for file operations so callback shows actual path
+                resolved_args = tool_args.copy()
+                if tool_name in ("file_read", "list_files") and "path" in resolved_args:
+                    resolved_args["path"] = self._resolve_path(resolved_args["path"])
+                # Include result for debugging
+                resolved_args["_result"] = tool_result
+                self._on_tool_call(tool_name, resolved_args, tokens_this_call)
 
             messages = messages + [
                 {
@@ -216,5 +231,7 @@ class Agent:
 
     def run(self, prompt: str) -> dict:
         """Run the agent with a prompt string."""
+        build_cache()
+        self._total_tokens_used = 0  # Reset for each run
         messages = [{"role": "user", "content": prompt}]
         return self._prompt(messages)
