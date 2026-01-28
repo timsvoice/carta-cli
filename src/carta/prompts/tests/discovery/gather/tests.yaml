@@ -7,7 +7,7 @@
       tool_choice: auto
   vars:
     system_prompt: file://../../../discover/gather.md
-    input: "I want to add user authentication to my app"
+    input: "I need to add a cache to my image server. The Cache should minimize the egress bacndwidht of my image storage service while adding aceptable latency to the user request."
   assert:
     - type: javascript
       value: |
@@ -25,7 +25,7 @@
       tool_choice: none
   vars:
     system_prompt: file://../../../discover/gather.md
-    input: "I want to add user authentication to my app"
+    input: "I need to add a cache to my image server. The Cache should minimize the egress bacndwidht of my image storage service while adding aceptable latency to the user request."
   assert:
     # Structure: Valid JSON array
     - type: is-json
@@ -55,12 +55,12 @@
       value: |
         Evaluate whether the questions are specific to the feature in the input, not generic questions that could apply to any feature.
 
-        Input feature: "user authentication"
+        Input feature: {{input}}
 
-        Score 1.0: Questions ask about authentication-specific decisions (login methods, password policies, session behavior, account recovery, user roles, security requirements)
-        Score 0.7: Most questions are authentication-specific, one may be generic
-        Score 0.4: Questions are generic software requirements (timeline, budget, priority) not specific to authentication
-        Score 0.0: Questions have nothing to do with authentication
+        Score 1.0: Questions ask about feature-specific decisions
+        Score 0.7: Most questions are feature-specific, one may be generic
+        Score 0.4: Questions are generic software requirements (timeline, budget, priority) not specific to feature
+        Score 0.0: Questions have nothing to do with feature
       threshold: 0.7
 
     # Role: Requirements (WHAT/WHY) not implementation (HOW)

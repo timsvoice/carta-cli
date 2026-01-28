@@ -9,6 +9,8 @@ prompts:
 
 providers:
   - id: openrouter:openai/gpt-4.1-mini
+  - id: openrouter:moonshotai/kimi-k2-thinking
+  - id: openrouter:minimax/minimax-m2.1
 
 defaultGrader:
   id: openrouter:anthropic/claude-haiku-4.5
