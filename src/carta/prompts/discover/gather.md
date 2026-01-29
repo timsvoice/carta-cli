@@ -4,6 +4,7 @@ description: "Generate a list of clarifying questions based on the users initial
 allowed-tools:
   - read_file
   - list_files
+  - grep
 ---
 
 ## Input

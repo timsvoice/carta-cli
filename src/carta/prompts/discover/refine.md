@@ -1,7 +1,10 @@
 ---
 name: "discover: refine a discovery document"
 description: "Refine a draft discovery document based on user feedback."
-allowed-tools: []
+allowed-tools:
+    - write
+    - read_file
+    - grep
 ---
 
 ## Role

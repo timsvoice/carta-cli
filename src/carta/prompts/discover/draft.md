@@ -4,6 +4,7 @@ description: "Generate a draft discovery document based on the user description 
 allowed-tools:
   - read_file
   - list_files
+  - grep
 ---
 
 ## Role
