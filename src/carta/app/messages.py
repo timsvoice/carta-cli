@@ -45,3 +45,20 @@ class DraftAction(Message):
         super().__init__()
         self.action = action  # "approve", "refine", "restart", "quit"
         self.feedback = feedback
+
+
+class FeatureSelected(Message):
+    """Emitted when user selects a feature from the list."""
+
+    def __init__(self, feature_path: str, discovery_content: str) -> None:
+        super().__init__()
+        self.feature_path = feature_path
+        self.discovery_content = discovery_content
+
+
+class MenuSelected(Message):
+    """Emitted when user selects an option from home menu."""
+
+    def __init__(self, option: str) -> None:
+        super().__init__()
+        self.option = option  # "discovery", "plan", "quit"

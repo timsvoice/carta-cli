@@ -94,3 +94,47 @@ def format_feature_dirname(sequence: int, name: str) -> str:
         Formatted directory name (e.g., "001-user-auth").
     """
     return f"{sequence:03d}-{name}"
+
+
+def list_feature_directories(carta_dir: Path) -> list[Path]:
+    """List all feature directories in the .carta directory.
+
+    Returns directories that have a discovery.md file, sorted by sequence number.
+
+    Args:
+        carta_dir: Path to the .carta directory.
+
+    Returns:
+        List of Path objects for feature directories with discovery.md files.
+    """
+    if not carta_dir.exists():
+        return []
+
+    # Pattern to match directories starting with 3-digit number
+    sequence_pattern = re.compile(r"^(\d{3})-")
+
+    features = []
+    for item in carta_dir.iterdir():
+        if item.is_dir():
+            match = sequence_pattern.match(item.name)
+            if match and (item / "discovery.md").exists():
+                features.append(item)
+
+    # Sort by sequence number
+    features.sort(key=lambda p: p.name)
+    return features
+
+
+def plan_exists(feature_dir: Path) -> bool:
+    """Check if a non-empty plan.md exists in the feature directory.
+
+    Args:
+        feature_dir: Path to the feature directory.
+
+    Returns:
+        True if plan.md exists and is non-empty.
+    """
+    plan_path = feature_dir / "plan.md"
+    if not plan_path.exists():
+        return False
+    return plan_path.stat().st_size > 0
