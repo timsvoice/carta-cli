@@ -13,19 +13,35 @@ class AgentError(Exception):
 
 
 class Agent:
+    # Default to LM Studio for local development
+    DEFAULT_BASE_URL = "http://localhost:1234/v1"
+    DEFAULT_MODEL = "google/gemma-2-9b"
+
     def __init__(
         self,
         root_path: str = ".",
         http_client: Any = None,
-        model: str = "openai/gpt-4.1-mini",
+        model: str | None = None,
+        base_url: str | None = None,
+        api_key: str | None = None,
         temperature: float = 0.0,
         max_tokens: int = 5000,
         on_tool_call: Callable[[str, dict, int], None] | None = None,
     ):
-        self.api_key = os.environ.get("OPENROUTER_API_KEY")
+        # Support environment overrides (e.g., for LM Studio local development)
+        self.base_url = base_url or os.environ.get("LLM_BASE_URL") or self.DEFAULT_BASE_URL
+        self.api_key = (
+            api_key or os.environ.get("LLM_API_KEY") or os.environ.get("OPENROUTER_API_KEY")
+        )
+        model = model or os.environ.get("LLM_MODEL", self.DEFAULT_MODEL)
 
+        # API key required for OpenRouter, optional for local (LM Studio)
+        is_local = "localhost" in self.base_url or "127.0.0.1" in self.base_url
         if not self.api_key:
-            raise AgentError("OPENROUTER_API_KEY is not set")
+            if is_local:
+                self.api_key = "lm-studio"  # Placeholder for local servers
+            else:
+                raise AgentError("OPENROUTER_API_KEY or LLM_API_KEY is not set")
 
         self._root_path = root_path
         self._http_client = http_client or httpx
@@ -136,7 +152,7 @@ class Agent:
     def _call_model(self, messages: list[dict]) -> dict:
         try:
             response = self._http_client.post(
-                "https://openrouter.ai/api/v1/chat/completions",
+                f"{self.base_url}/chat/completions",
                 json={
                     "model": self._model,
                     "temperature": self._temperature,
