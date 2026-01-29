@@ -1,0 +1,20 @@
+- description: "Should refine a discovery document based on user feedback"
+  provider:
+    id: openrouter:openai/gpt-4.1-mini
+    config:
+      tools: file://../../tools/tools.yaml
+      tool_choice: none
+  vars:
+    system_prompt: file://../../../discover/refine.md
+    discovery_document: file://../fixtures/discovery-draft.md
+    input: "Add a constraint that folder names should be limited to 50 characters maximum to avoid path length issues on Windows."
+  assert:
+    # Check that the user feedback was incorporated
+    - type: llm-rubric
+      provider:
+        id: openrouter:openai/gpt-4.1-mini
+      value: |
+        The user requested the following change: "{{input}}"
+
+        PASS if: The refined document incorporates this feedback appropriately (e.g., adds it as a constraint, updates relevant sections).
+        FAIL if: The feedback is not reflected in the refined document.

@@ -1,23 +1,46 @@
-description: "Carta Prompt Evaluation"
+# Carta Prompt Evaluation
+#
+# Run individual test suites (recommended):
+#   promptfoo eval -c src/carta/prompts/tests/discovery/gather/promptfooconfig.yaml
+#   promptfoo eval -c src/carta/prompts/tests/discovery/draft/promptfooconfig.yaml
+#   promptfoo eval -c src/carta/prompts/tests/discovery/refine/promptfooconfig.yaml
+#
+# Or run all at once (each test runs against both prompts):
+#   promptfoo eval -c promptfooconfig.yaml
 
-providers:
-  - id: openrouter:openai/gpt-4o-mini
-    prompts: [gather]
+description: "Carta Prompt Evaluation - All Tests"
 
 prompts:
   - id: gather-requirements
-    label: gather
     raw: |
       {{system_prompt}}
 
-      ## Feature Description
+      {{input}}
+  - id: refine-discovery
+    raw: |
+      {{system_prompt}}
+      ## Discovery Document
+      {{discovery_document}}
+      ## User Feedback
       {{input}}
 
-defaultTest:
-  options:
-    provider: openrouter:anthropic/claude-sonnet-4
-  vars:
-    system_prompt: file://src/carta/prompts/discover/gather.md
+providers:
+  # Provider for gather/draft tests (uses gather-requirements prompt)
+  - id: openrouter:openai/gpt-4.1-mini
+    label: gather-provider
+    prompts:
+      - gather-requirements
+
+  # Provider for refine tests (uses refine-discovery prompt)
+  - id: openrouter:openai/gpt-4.1-mini
+    label: refine-provider
+    prompts:
+      - refine-discovery
+
+defaultGrader:
+  id: openrouter:anthropic/claude-haiku-4.5
 
 tests:
-  - file://src/carta/prompts/tests/discovery/gather.test.yaml
+  - file://src/carta/prompts/tests/discovery/gather/tests.yaml
+  - file://src/carta/prompts/tests/discovery/draft/tests.yaml
+  - file://src/carta/prompts/tests/discovery/refine/tests.yaml

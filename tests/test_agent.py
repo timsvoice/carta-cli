@@ -3,7 +3,7 @@ import tempfile
 
 import pytest
 from unittest.mock import Mock, MagicMock
-from carta.agent import Agent
+from carta.utils.agent import Agent
 
 
 @pytest.fixture
@@ -129,3 +129,43 @@ def test_agent_run_with_tool(mock_httpx, temp_dir):
     data = agent.run("Index the code in the current directory.")
     assert data is not None
     assert mock_httpx.post.call_count == 2
+
+
+def test_grep_basic(agent, temp_dir):
+    """Test grep finds matching content."""
+    result = agent._execute_grep("test")
+    assert "test.txt:1:" in result
+    assert "test content" in result
+
+
+def test_grep_no_match(agent, temp_dir):
+    """Test grep returns message when no matches found."""
+    result = agent._execute_grep("nonexistent_pattern_xyz")
+    assert result == "No matches found."
+
+
+def test_grep_ignore_case(agent, temp_dir):
+    """Test grep with case-insensitive search."""
+    result = agent._execute_grep("TEST", ignore_case=True)
+    assert "test.txt:1:" in result
+
+    result = agent._execute_grep("TEST", ignore_case=False)
+    assert result == "No matches found."
+
+
+def test_grep_invalid_regex(agent):
+    """Test grep handles invalid regex gracefully."""
+    result = agent._execute_grep("[invalid")
+    assert "Error: Invalid regex pattern" in result
+
+
+def test_grep_nonexistent_path(agent):
+    """Test grep handles nonexistent path."""
+    result = agent._execute_grep("test", path="nonexistent")
+    assert "does not exist" in result
+
+
+def test_grep_specific_file(agent, temp_dir):
+    """Test grep on a specific file."""
+    result = agent._execute_grep("content", path="test.txt")
+    assert "test.txt:1:" in result

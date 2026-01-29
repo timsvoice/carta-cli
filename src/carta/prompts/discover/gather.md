@@ -4,6 +4,7 @@ description: "Generate a list of clarifying questions based on the users initial
 allowed-tools:
   - read_file
   - list_files
+  - grep
 ---
 
 ## Input
@@ -19,7 +20,7 @@ Generate 2-5 clarifying questions to gather requirements for a discovery documen
 
 ## Process
 1. Review the feature description
-2. (Optional) Use read_file/list_files to understand existing patterns
+2. Gather context from the codebase using list_files and read_file to understand existing patterns
 3. Identify critical ambiguities: scope > security/privacy > UX > technical
 4. Output questions using the template below
 

@@ -5,6 +5,7 @@ allowed-tools:
   - run_terminal_cmd
   - write
   - read_file
+  - grep
 ---
 
 **ALWAYS WAIT for user input before generating discovery.**
