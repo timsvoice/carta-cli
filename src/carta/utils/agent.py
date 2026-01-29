@@ -115,8 +115,10 @@ class Agent:
         ]
 
     def _resolve_path(self, path: str) -> str:
-        """Resolve a path relative to root_path"""
-        return os.path.join(self._root_path, path)
+        """Resolve a path relative to root_path, preventing directory traversal."""
+        # Strip leading slashes to prevent absolute paths from escaping sandbox
+        safe_path = path.lstrip("/")
+        return os.path.join(self._root_path, safe_path)
 
     def _execute_read_file(self, path: str) -> str:
         """Read a file"""
