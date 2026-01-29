@@ -1,6 +1,7 @@
 import httpx
 import json
 import os
+import re
 from typing import Any, Callable
 
 from carta.utils.cache import build_cache
@@ -86,6 +87,31 @@ class Agent:
                     },
                 },
             },
+            {
+                "type": "function",
+                "function": {
+                    "name": "grep",
+                    "description": "Search for a pattern in files. Returns matching lines with file paths and line numbers.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "pattern": {
+                                "type": "string",
+                                "description": "The pattern to search for (supports regex)",
+                            },
+                            "path": {
+                                "type": "string",
+                                "description": "Directory or file to search in (default: search all files)",
+                            },
+                            "ignore_case": {
+                                "type": "boolean",
+                                "description": "Case-insensitive search (default: false)",
+                            },
+                        },
+                        "required": ["pattern"],
+                    },
+                },
+            },
         ]
 
     def _resolve_path(self, path: str) -> str:
@@ -128,11 +154,62 @@ class Agent:
 
         return json.dumps(entries)
 
+    def _execute_grep(self, pattern: str, path: str = ".", ignore_case: bool = False) -> str:
+        """Search for a pattern in files, returning matching lines with context."""
+        full_path = self._resolve_path(path)
+        max_results = 50  # Limit to avoid overwhelming output
+
+        if not os.path.exists(full_path):
+            return f"Error: '{path}' does not exist."
+
+        try:
+            flags = re.IGNORECASE if ignore_case else 0
+            regex = re.compile(pattern, flags)
+        except re.error as e:
+            return f"Error: Invalid regex pattern: {e}"
+
+        matches: list[str] = []
+
+        # Collect files to search
+        if os.path.isfile(full_path):
+            files_to_search = [full_path]
+        else:
+            files_to_search = []
+            for root, _, files in os.walk(full_path):
+                for file in files:
+                    files_to_search.append(os.path.join(root, file))
+
+        for file_path in files_to_search:
+            if len(matches) >= max_results:
+                break
+
+            try:
+                with open(file_path, "r") as f:
+                    for line_num, line in enumerate(f, 1):
+                        if regex.search(line):
+                            # Get path relative to search root for cleaner output
+                            rel_path = os.path.relpath(file_path, self._root_path)
+                            matches.append(f"{rel_path}:{line_num}: {line.rstrip()}")
+                            if len(matches) >= max_results:
+                                break
+            except (UnicodeDecodeError, OSError):
+                # Skip binary files or files we can't read
+                continue
+
+        if not matches:
+            return "No matches found."
+
+        result = "\n".join(matches)
+        if len(matches) >= max_results:
+            result += f"\n... (truncated at {max_results} results)"
+        return result
+
     def _execute_tool(self, tool_call: dict) -> str:
         """Execute a tool call from OpenRouter API response"""
         tools: dict[str, Callable[..., str]] = {
             "file_read": self._execute_read_file,
             "list_files": self._execute_list_files,
+            "grep": self._execute_grep,
         }
 
         func = tool_call["function"]
@@ -229,7 +306,7 @@ class Agent:
             if self._on_tool_call:
                 # Resolve paths for file operations so callback shows actual path
                 resolved_args = tool_args.copy()
-                if tool_name in ("file_read", "list_files") and "path" in resolved_args:
+                if tool_name in ("file_read", "list_files", "grep") and "path" in resolved_args:
                     resolved_args["path"] = self._resolve_path(resolved_args["path"])
                 # Include result for debugging
                 resolved_args["_result"] = tool_result
